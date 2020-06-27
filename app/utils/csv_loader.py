@@ -1,3 +1,4 @@
+from app.models.package import Package
 import csv
 
 class CsvLoader(object):
@@ -9,4 +10,4 @@ class CsvLoader(object):
             with open(f'{path}.csv') as data:
                 reader = csv.reader(data)
                 for line in reader:
-                    print(line)
+                    print(Package(line))
