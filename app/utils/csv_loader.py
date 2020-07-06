@@ -2,9 +2,6 @@ import csv
 
 
 class CsvLoader(object):
-    def __init__(self):
-        pass
-
     def load(self, items):
         my_dict = dict()
         # TODO: O(n^2)
