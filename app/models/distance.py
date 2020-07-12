@@ -1,3 +1,5 @@
+import string as string
+
 class Distance(object):
     COLUMN_COUNT = 29
 
@@ -5,6 +7,8 @@ class Distance(object):
 
         # TODO: We should'nt be ignoring lines
         if len(line) == Distance.COLUMN_COUNT:
-            self.address = line[0]
-            self.hub = line[1]
+            street_address = line[1].split("\n")
+            self.street_address = street_address[0].strip()
+            self.zip = street_address[1].strip()
+            self.place_street = line[0].strip()
             self.points = line[2:]
