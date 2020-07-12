@@ -2,8 +2,10 @@ from .models.hash_table import HashTable
 
 
 class App(object):
-    _TRUCK_SPEED = 18
     _MAX_ALLOWED_PACKAGES = 16
+    _TRUCK_SPEED = 18
+    _DRIVERS_COUNT = 2
+    _TRUCKS_COUNT = 3
 
     def __init__(self):
         self.__packages = None
