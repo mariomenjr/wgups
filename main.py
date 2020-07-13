@@ -1,5 +1,5 @@
 from app.models.package import Package
-from app.models.distance import Distance
+from app.models.place import Place
 from app.utils.csv_loader import CsvLoader
 from app.app import App
 
@@ -8,7 +8,7 @@ if __name__ == "__main__":
     PATH_DISTANCES = "data/distances"
 
     loaded = CsvLoader().load([{'path': PATH_PACKAGES, 'model': Package},
-                               {'path': PATH_DISTANCES, 'model': Distance}])
+                               {'path': PATH_DISTANCES, 'model': Place}])
     app = App()
 
     app.set_packages(loaded.get(PATH_PACKAGES))

@@ -26,18 +26,20 @@ class App(object):
         self.__distance_matrix = DistanceMatrix()
         self.__distance_matrix.feed(distances_list)
 
-    def packages_count(self):
+    def count_packages(self):
         return self.get_packages().get_count()
 
-    def distances_count(self):
+    def count_distances(self):
         count = self.get_distances_matrix().get_count()
         return count * count
 
     def run(self):
         print(
-            f"App started: there are {self.packages_count()} packages and {self.distances_count()} distances.")
+            f"App started: there are {self.count_packages()} packages and {self.count_distances()} distances.")
         
-        # from_address = "4001 South 700 East"
-        # to_address = "233 Canyon Rd"
+        from_street = "4001 South 700 East"
+        to_street = "233 Canyon Rd"
+
+        distance = self.get_distances_matrix().between_streets(from_street, to_street)
 
         pass
