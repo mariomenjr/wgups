@@ -9,3 +9,5 @@ class Place(object):
         self.zip = street_address[1].strip()
         self.place_street = line[0].strip()
         self.points = line[2:]
+
+        self.closest_places = list([])

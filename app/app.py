@@ -1,7 +1,10 @@
 from .utils.hash_table import HashTable
 from .utils.distance_matrix import DistanceMatrix
 
+
 class App(object):
+    GOAL_MILES = 145
+    TOTAL_PACKAGES = 40
     MAX_ALLOWED_PACKAGES = 16
     TRUCK_SPEED = 18
     DRIVERS_COUNT = 2
@@ -9,6 +12,7 @@ class App(object):
 
     def __init__(self):
         self.__packages = None
+        self.__places = None
         self.__distance_matrix = None
 
     def get_packages(self):
@@ -22,9 +26,10 @@ class App(object):
     def get_distances_matrix(self):
         return self.__distance_matrix
 
-    def set_distances_matrix(self, distances_list):
+    def set_distances_matrix(self, places):
         self.__distance_matrix = DistanceMatrix()
-        self.__distance_matrix.feed(distances_list)
+        self.__distance_matrix.feed(places)
+        self.__places = self.__distance_matrix.fill_closest(places)
 
     def count_packages(self):
         return self.get_packages().get_count()
@@ -36,10 +41,14 @@ class App(object):
     def run(self):
         print(
             f"App started: there are {self.count_packages()} packages and {self.count_distances()} distances.")
-        
-        f_street = "4001 South 700 East"
-        t_street = "233 Canyon Rd"
+        self.build_distances_graph()
+        # self.load_trucks()
 
-        distance = self.get_distances_matrix().between_streets(f_street, t_street)
+    def build_distances_graph(self):
+        print(f"Finding best routes...")
+        # f_street = "4001 South 700 East"
+        # t_street = "233 Canyon Rd"
+
+        # distance = self.get_distances_matrix().between_streets(f_street, t_street)
 
         pass
