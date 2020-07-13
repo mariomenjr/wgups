@@ -1,5 +1,5 @@
-from .models.hash_table import HashTable
-
+from .utils.hash_table import HashTable
+from .utils.distance_matrix import DistanceMatrix
 
 class App(object):
     _MAX_ALLOWED_PACKAGES = 16
@@ -9,8 +9,7 @@ class App(object):
 
     def __init__(self):
         self.__packages = None
-        self.__distances_matrix = []
-        self.__mapped_addresses = dict()
+        self.__distance_matrix = None
 
     def get_packages(self):
         return self.__packages
@@ -21,28 +20,24 @@ class App(object):
             self.__packages.add(package.id, package)
 
     def get_distances_matrix(self):
-        return self.__distances_matrix
+        return self.__distance_matrix
 
-    def set_distances_matrix(self, distances_matrix):
-        for index, row in enumerate(distances_matrix):
-            self.__mapped_addresses[row.street_address] = index
-            self.__distances_matrix.append(row.points)
-            del row.points
-
-        matrix_height = len(distances_matrix)
-        matrix_width = len(self.__mapped_addresses)
-
-        if matrix_height != matrix_width:
-            raise TypeError(
-                f"Distance matrix isn't square ({matrix_height}x{matrix_width})")
+    def set_distances_matrix(self, distances_list):
+        self.__distance_matrix = DistanceMatrix()
+        self.__distance_matrix.feed(distances_list)
 
     def packages_count(self):
         return self.get_packages().get_count()
 
     def distances_count(self):
-        leng = len(self.get_distances_matrix())
-        return leng * leng
+        count = self.get_distances_matrix().get_count()
+        return count * count
 
     def run(self):
         print(
             f"App started: there are {self.packages_count()} packages and {self.distances_count()} distances.")
+        
+        # from_address = "4001 South 700 East"
+        # to_address = "233 Canyon Rd"
+
+        pass
