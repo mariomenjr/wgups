@@ -12,5 +12,6 @@ class CsvLoader(object):
                 for line in reader:
                     if path not in my_dict:
                         my_dict[path] = []
-                    my_dict[path].append(item.get("model")(line))
+                    if len(line) == item.get("len"):
+                        my_dict[path].append(item.get("model")(line))
         return my_dict
