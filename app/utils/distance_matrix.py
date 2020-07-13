@@ -20,8 +20,8 @@ class DistanceMatrix(object):
             raise TypeError(
                 f"Distance matrix isn't square ({matrix_height}x{matrix_width})")
 
-    def between_streets(self, from_street, to_street):
-        f_street = self.__mapped_addresses[from_street]
-        t_street = self.__mapped_addresses[to_street]
+    def between_streets(self, f_street, t_street):
+        f_street = self.__mapped_addresses[f_street]
+        t_street = self.__mapped_addresses[t_street]
 
         return self.__matrix[t_street][f_street] if f_street <= t_street else self.__matrix[f_street][t_street]

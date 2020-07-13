@@ -2,10 +2,10 @@ from .utils.hash_table import HashTable
 from .utils.distance_matrix import DistanceMatrix
 
 class App(object):
-    _MAX_ALLOWED_PACKAGES = 16
-    _TRUCK_SPEED = 18
-    _DRIVERS_COUNT = 2
-    _TRUCKS_COUNT = 3
+    MAX_ALLOWED_PACKAGES = 16
+    TRUCK_SPEED = 18
+    DRIVERS_COUNT = 2
+    TRUCKS_COUNT = 3
 
     def __init__(self):
         self.__packages = None
@@ -37,9 +37,9 @@ class App(object):
         print(
             f"App started: there are {self.count_packages()} packages and {self.count_distances()} distances.")
         
-        from_street = "4001 South 700 East"
-        to_street = "233 Canyon Rd"
+        f_street = "4001 South 700 East"
+        t_street = "233 Canyon Rd"
 
-        distance = self.get_distances_matrix().between_streets(from_street, to_street)
+        distance = self.get_distances_matrix().between_streets(f_street, t_street)
 
         pass
