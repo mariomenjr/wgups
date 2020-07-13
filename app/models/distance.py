@@ -1,5 +1,6 @@
 import string as string
 
+
 class Distance(object):
     COLUMN_COUNT = 29
 

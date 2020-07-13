@@ -10,12 +10,13 @@ class App(object):
     def __init__(self):
         self.__packages = None
         self.__distances_matrix = []
+        self.__mapped_addresses = dict()
 
     def get_packages(self):
         return self.__packages
 
     def set_packages(self, packages):
-        self.__packages = HashTable(size = len(packages))
+        self.__packages = HashTable(size=len(packages))
         for package in packages:
             self.__packages.add(package.id, package)
 
@@ -23,13 +24,24 @@ class App(object):
         return self.__distances_matrix
 
     def set_distances_matrix(self, distances_matrix):
-        self.__distances_matrix = distances_matrix
+        for index, row in enumerate(distances_matrix):
+            self.__mapped_addresses[row.street_address] = index
+            self.__distances_matrix.append(row.points)
+            del row.points
+
+        matrix_height = len(distances_matrix)
+        matrix_width = len(self.__mapped_addresses)
+
+        if matrix_height != matrix_width:
+            raise TypeError(
+                f"Distance matrix isn't square ({matrix_height}x{matrix_width})")
 
     def packages_count(self):
-        return len(self.get_packages())
+        return self.get_packages().get_count()
 
     def distances_count(self):
-        return len(self.get_distances_matrix())
+        leng = len(self.get_distances_matrix())
+        return leng * leng
 
     def run(self):
         print(

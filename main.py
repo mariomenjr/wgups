@@ -14,4 +14,6 @@ if __name__ == "__main__":
     app.set_packages(loaded.get(PATH_PACKAGES))
     app.set_distances_matrix(loaded.get(PATH_DISTANCES))
 
+    del loaded
+
     app.run()
