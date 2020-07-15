@@ -41,14 +41,38 @@ class App(object):
     def run(self):
         print(
             f"App started: there are {self.count_packages()} packages and {self.count_distances()} distances.")
-        self.build_distances_graph()
+
+        self.build_best_route(self.__places)
         # self.load_trucks()
 
-    def build_distances_graph(self):
+    def build_best_route(self, places, first_index = 0):
+        route_stack = list([])
+        count_places = len(places)
+        visited_places_indexs = dict({first_index: 0})
+
         print(f"Finding best routes...")
-        # f_street = "4001 South 700 East"
-        # t_street = "233 Canyon Rd"
+        place = places[first_index]
 
-        # distance = self.get_distances_matrix().between_streets(f_street, t_street)
+        while((count_places - 1) >= len(visited_places_indexs.keys())):
+            nearest = None
+            been_visited = True
+            place_index = 0
+            index_closest = 0
 
-        pass
+            while(been_visited):
+                place_index = place.closest_places[index_closest].get('place_index')
+                been_visited = place_index in visited_places_indexs.keys()
+                if been_visited:
+                    index_closest = index_closest + 1
+                else:
+                    visited_places_indexs[place_index] = index_closest
+
+            nearest = places[place_index]
+            route_stack.append(nearest)
+
+            print(
+                f"... `{place.place_street}` is away from `{nearest.place_street}` by {place.closest_places[0].get('distance')} miles")            
+
+            place = nearest
+
+        return route_stack
