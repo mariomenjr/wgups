@@ -1,3 +1,6 @@
+from ..models.nearest import Nearest
+
+
 class DistanceMatrix(object):
 
     def __init__(self):
@@ -10,10 +13,10 @@ class DistanceMatrix(object):
             for j in range(i + 1, places_count):
                 place.points[j] = places[j].points[i]
             # keep the index for place and sort by short distance
-            distances = [{'distance': x, 'place_index': i}
+            distances = [Nearest(distance=x, place_index=i)
                          for i, x in enumerate(place.points)]
-            distances.sort(key=(lambda item: float(item.get("distance"))))
-            place.closest_places = list(distances[1:])
+            distances.sort(key=(lambda item: float(item.distance)))
+            place.nearest = list(distances[1:])
 
         return places
 
@@ -29,5 +32,4 @@ class DistanceMatrix(object):
         matrix_width = len(self.__mapped_addresses)
 
         if matrix_height != matrix_width:
-            raise TypeError(
-                f"Distance matrix isn't square ({matrix_height}x{matrix_width})")
+            raise TypeError(f"Distance matrix isn't square ({matrix_height}x{matrix_width})")

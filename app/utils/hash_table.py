@@ -33,8 +33,22 @@ class HashTable(object):
 
         if pairs is None:
             return pairs
+        try:
+            return next((pair[1] for pair in pairs if pair[0] == key))
+        except:
+            return None
 
-        return next((pair[1] for pair in pairs if pair[0] == key))
+    def delete(self, key):
+        hashed = self.hash(key)
+        pairs = self.__table[hashed]
+
+        if pairs is None:
+            return pairs
+
+        for pair in pairs: 
+            if pair[0] == key:
+                pairs.remove(pair)
+        pass
 
     def get_count(self):
         return self.__count

@@ -1,6 +1,8 @@
 class Package(object):
 
-    def __init__(self, line):
+    def __init__(self, line, index):
+        self.index = index
+        
         self.id = line[0].strip()
         self.street_address = line[1].strip()
         self.city = line[2].strip()
@@ -12,3 +14,4 @@ class Package(object):
 
         self.start_time = 8
         self.assigned_truck = None
+        self.group = None
