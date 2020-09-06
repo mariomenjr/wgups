@@ -59,7 +59,7 @@ class App(object):
         for truck in loaded_trucks:
             truck.route = self.build_best_route(truck.places)
             pass
-
+        
         pass
     
     def assign_packages(self, places, packages):
@@ -116,7 +116,7 @@ class App(object):
     def load_trucks(self, places_stack, start_place):
         trucks = list([
             Truck(lambda pkg: pkg.group == "same"), 
-            Truck(lambda pkg: pkg.start_time == 9.0833), 
+            Truck(lambda pkg: pkg.start_time == 9.0833, start_time=9.0833), 
             Truck(lambda pkg: pkg.assigned_truck == 2)])
         
         places_by_street_address = list([dict() for truck in range(len(trucks))])
