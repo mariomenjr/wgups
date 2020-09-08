@@ -2,11 +2,10 @@ from .utils.hash_table import HashTable
 from .utils.distance_matrix import DistanceMatrix
 from .utils.edge_cases import EdgeCases
 from .models.truck import Truck
-
+from .models.route import Route
 
 class App(object):
     GOAL_MILES = 145
-    TRUCK_SPEED = 18
 
     TOTAL_PACKAGES = 40
 
@@ -26,7 +25,7 @@ class App(object):
         for package in packages:
             self.__packages.add(package.id, package)
 
-    def set_edge_cases_config(self):
+    def set_assumptions(self):
         # set assumptions
         EdgeCases.set_cannot_leave_before_905_grouping(self.__packages)
         EdgeCases.set_same_truck_same_time_grouping(self.__packages)
@@ -51,30 +50,44 @@ class App(object):
     def run(self):
         print(f"App started: there are {self.packages_count()} packages and {self.count_distances()} distances.")
 
-        self.set_edge_cases_config()
+        # setting problem's assumptions
+        self.set_assumptions()
 
         places = self.assign_packages(self.__places, self.__packages)
         loaded_trucks = self.load_trucks(places, self.__places[0])
 
         for truck in loaded_trucks:
-            truck.route = self.build_best_route(truck.places)
-            pass
-        
-        pass
-    
+            places = self.build_best_route(truck.places)
+            truck.route = Route(places)
+
+        delivery_report = list([])
+
+        for truck in loaded_trucks:
+            delivery_report.extend(truck.deliver_route(lambda package_id: self.__packages.get(package_id)))
+
+        print("\n")
+        print("=============================")
+        print("= ALL PACKAGES              =")
+        print("=============================")
+
+        for (package_id, destination, truck, now, status) in delivery_report:
+            print(f"{package_id} | {destination.place_street} | {destination.street_address} | {status} in Truck {truck.id}")
+
     def assign_packages(self, places, packages):
         places_by_street_address = {place.street_address: place for place in places}
 
-        # distribute packages
+        # distribute packages to correct place
         for id in range(1, packages.get_count()):
             package = packages.get(f"{id}")
 
+            # get package's delivery place
             place = places_by_street_address.get(package.street_address)
             if place is not None:
                 place.packages_ids.append(package.id)
 
         return places
-        
+    
+    # heuristic algorithm to find the best route given a list of places
     def build_best_route(self, places, first_index=0):
         places_stack = list([])
 
@@ -82,7 +95,6 @@ class App(object):
         visited_places_indexs = dict({first_index: 0})
         places_by_indexs = {place.index:place for place in places}
 
-        print(f"Finding best routes...")
         place = places[first_index]
         places_stack.append(place)
 
@@ -114,35 +126,37 @@ class App(object):
         return places_stack
 
     def load_trucks(self, places_stack, start_place):
+        # just use 2 trucks
         trucks = list([
-            Truck(lambda pkg: pkg.group == "same"), 
-            Truck(lambda pkg: pkg.start_time == 9.0833, start_time=9.0833), 
-            Truck(lambda pkg: pkg.assigned_truck == 2)])
+            Truck(1, lambda pkg: pkg.group == "same"), 
+            Truck(2, lambda pkg: pkg.start_time == 9.0833, start_time=9.0833), 
+            Truck(3, lambda pkg: pkg.assigned_truck == 2)])
         
-        places_by_street_address = list([dict() for truck in range(len(trucks))])
+        routed_places_by_street_address = list([dict() for _ in range(len(trucks))])
         
         # first load special packages
-        for i in range(len(places_stack)):
-            place = places_stack[i]
+        for place in places_stack:
 
-            is_broken = False
-            for j in range(len(place.packages_ids)):
-                package = self.__packages.get(place.packages_ids[j])
+            is_place_routed = False
+            for package_id in place.packages_ids:
+                package = self.__packages.get(package_id)
 
-                for index, truck in enumerate(trucks):
-                    is_broken = places_by_street_address[index].get(place.street_address) is not None
-                    if is_broken: break
+                for k, truck in enumerate(trucks):
+                    is_place_routed = routed_places_by_street_address[k].get(place.street_address) is not None
+                    if is_place_routed: break
 
-                    if truck.check_if_special(package):
-                        places_by_street_address[index][place.street_address] = place
-                        truck.packages_count = truck.packages_count + len(places_by_street_address[index][place.street_address].packages_ids)
-
-                if is_broken: break                    
+                    if truck.check_edge_case(package):
+                        routed_places_by_street_address[k][place.street_address] = place
+                        truck.packages_count = truck.packages_count + len(routed_places_by_street_address[k][place.street_address].packages_ids)
+                    
+                if is_place_routed: break                    
+                
+        # TODO: once I distributed the special cases, distribute the rest
 
         # put the list in the truck
-        for index, truck in enumerate(trucks):
+        for k, truck in enumerate(trucks):
             truck.places = list([])
             truck.places.append(start_place)
-            truck.places.extend(places_by_street_address[index].values()) 
+            truck.places.extend(routed_places_by_street_address[k].values())
 
         return trucks # [delivery for delivery in deliveries]

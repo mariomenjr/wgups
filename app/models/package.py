@@ -2,9 +2,9 @@ import enum
 
 
 class PackageStatus(enum.Enum):
-    IN_ORIGIN = 0
-    IN_ROUTE = 1
-    DELIVERED = 2
+    IN_ORIGIN = "At hub"
+    IN_ROUTE = "In route"
+    DELIVERED = "Delivered"
 
 
 class Package(object):
@@ -20,6 +20,8 @@ class Package(object):
         self.delivery_deadline = line[5].strip()
         self.mass = line[6].strip()
         self.notes = line[7].strip()
+
+        self.status = PackageStatus.IN_ORIGIN
 
         self.start_time = 8
         self.assigned_truck = None

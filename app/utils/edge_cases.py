@@ -10,10 +10,10 @@ class EdgeCases:
     def set_only_truck_2_grouping(packages):
         grouped = list([3, 18, 36, 38])
         for i in grouped:
-            packages.get(f"{i}").start_time = 9.0833
+            packages.get(f"{i}").assigned_truck = 2
 
     @staticmethod
     def set_cannot_leave_before_905_grouping(packages):
         grouped = list([6, 25, 28, 32])
         for i in grouped:
-            packages.get(f"{i}").assigned_truck = 2
+            packages.get(f"{i}").start_time = 9.0833
