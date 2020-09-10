@@ -43,14 +43,15 @@ class Truck(object):
                 get_package_by_id(package_id).status = PackageStatus.IN_ROUTE
 
         def travel_route(origin, destination):
-            travel_time = self.route.get_time_between_places(
-                origin, destination)
+            travel_time = self.route.get_time_between_places(origin, destination)
+            distance = self.route.find_distance_between_places(origin, destination)
+
             self.elapsed_time = self.elapsed_time + travel_time
 
             for _, package_id in enumerate(destination.packages_ids):
                 now_time = self.start_time + self.elapsed_time
                 get_package_by_id(package_id).status = PackageStatus.DELIVERED
-                delivery_report.append((package_id, destination, self, now_time, f"{PackageStatus.DELIVERED.value} @ {self.decimal_to_hours(now_time)}"))
+                delivery_report.append((package_id, destination, distance, self, f"{PackageStatus.DELIVERED.value} @ {self.decimal_to_hours(now_time)}"))
         self.route.travel_route(travel_route)
 
         return delivery_report

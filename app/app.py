@@ -70,8 +70,14 @@ class App(object):
         print("= ALL PACKAGES              =")
         print("=============================")
 
-        for (package_id, destination, truck, now, status) in delivery_report:
+        total_distance = 0.0
+
+        for (package_id, destination, distance, truck, status) in delivery_report:
             print(f"{package_id} | {destination.place_street} | {destination.street_address} | {status} in Truck {truck.id}")
+            total_distance = total_distance + distance
+        
+        print("\n")
+        print(f"Total miles: {total_distance}")
 
     def assign_packages(self, places, packages):
         places_by_street_address = {place.street_address: place for place in places}
@@ -132,31 +138,56 @@ class App(object):
             Truck(2, lambda pkg: pkg.start_time == 9.0833, start_time=9.0833), 
             Truck(3, lambda pkg: pkg.assigned_truck == 2)])
         
-        routed_places_by_street_address = list([dict() for _ in range(len(trucks))])
+        totals = dict()
+        totals["packages"] = 0
+
+        routed_places_by_street_address = dict()
+        routed_places_in_truck_by_street_address = list([dict() for _ in range(len(trucks))])
         
-        # first load special packages
-        for place in places_stack:
+        def route_place_in_truck(place, truck_tuple):
+            (k, truck) = truck_tuple
+            routed_places_by_street_address[place.street_address] = place
+            routed_places_in_truck_by_street_address[k][place.street_address] = place
 
-            is_place_routed = False
-            for package_id in place.packages_ids:
-                package = self.__packages.get(package_id)
+            packages_count = len(routed_places_by_street_address[place.street_address].packages_ids)
+            truck.packages_count = truck.packages_count + packages_count
+            
+            print(f"{k} -- {place.street_address} -- {packages_count}")
+            totals["packages"] = totals.get('packages') + packages_count
 
-                for k, truck in enumerate(trucks):
-                    is_place_routed = routed_places_by_street_address[k].get(place.street_address) is not None
+        def load_packages_by_place(callback):
+            for place in places_stack:
+                is_place_routed = False
+                for package_id in place.packages_ids:
+                    package = self.__packages.get(package_id)
+
+                    for k, truck in enumerate(trucks):
+                        is_place_routed = routed_places_by_street_address.get(place.street_address) is not None
+                        if is_place_routed: break
+
+                        callback(package, place, (k, truck))
+                        
                     if is_place_routed: break
 
-                    if truck.check_edge_case(package):
-                        routed_places_by_street_address[k][place.street_address] = place
-                        truck.packages_count = truck.packages_count + len(routed_places_by_street_address[k][place.street_address].packages_ids)
-                    
-                if is_place_routed: break                    
-                
-        # TODO: once I distributed the special cases, distribute the rest
+        # Load special packages
+        def handle_special_packages(package, place, truck_tuple):
+            (_, truck) = truck_tuple
+            if truck.check_edge_case(package):
+                route_place_in_truck(place, truck_tuple)
+
+        load_packages_by_place(handle_special_packages)
+
+        # Once I distributed the special cases, distribute the rest
+        def handle_normal_packages(package, place, truck_tuple):
+            route_place_in_truck(place, truck_tuple)
+        load_packages_by_place(handle_normal_packages)
 
         # put the list in the truck
         for k, truck in enumerate(trucks):
             truck.places = list([])
             truck.places.append(start_place)
-            truck.places.extend(routed_places_by_street_address[k].values())
+            truck.places.extend(routed_places_in_truck_by_street_address[k].values())
+
+        print(f"total_packages: {totals.get('packages')}")
 
         return trucks # [delivery for delivery in deliveries]
