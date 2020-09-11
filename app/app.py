@@ -60,6 +60,7 @@ class App(object):
             places = self.build_best_route(truck.places)
             truck.route = Route(places)
 
+        loaded_trucks[2].start_time = loaded_trucks[2].start_time + loaded_trucks[0].route.time
         delivery_report = list([])
 
         for truck in loaded_trucks:
@@ -67,7 +68,7 @@ class App(object):
 
         print("\n")
         print("=============================")
-        print("= ALL PACKAGES              =")
+        print("=       ALL PACKAGES        =")
         print("=============================")
 
         total_distance = 0.0
@@ -83,8 +84,8 @@ class App(object):
         places_by_street_address = {place.street_address: place for place in places}
 
         # distribute packages to correct place
-        for id in range(1, packages.get_count()):
-            package = packages.get(f"{id}")
+        for id in range(packages.get_count()):
+            package = packages.get(f"{id + 1}")
 
             # get package's delivery place
             place = places_by_street_address.get(package.street_address)
@@ -126,9 +127,10 @@ class App(object):
             nearest = places_by_indexs.get(place_index)
             places_stack.append(nearest)
 
-            print(f"`{place.place_street}` is away from `{nearest.place_street}` by {place.points[nearest.index]} miles")
+            # print(f"`{place.place_street}` is away from `{nearest.place_street}` by {place.points[nearest.index]} miles")
             place = nearest
 
+        places_stack.append(places[first_index])
         return places_stack
 
     def load_trucks(self, places_stack, start_place):
@@ -152,7 +154,6 @@ class App(object):
             packages_count = len(routed_places_by_street_address[place.street_address].packages_ids)
             truck.packages_count = truck.packages_count + packages_count
             
-            print(f"{k} -- {place.street_address} -- {packages_count}")
             totals["packages"] = totals.get('packages') + packages_count
 
         def load_packages_by_place(callback):
@@ -165,7 +166,8 @@ class App(object):
                         is_place_routed = routed_places_by_street_address.get(place.street_address) is not None
                         if is_place_routed: break
 
-                        callback(package, place, (k, truck))
+                        if truck.packages_count < truck.MAX_ALLOWED_PACKAGES:
+                            callback(package, place, (k, truck))
                         
                     if is_place_routed: break
 
@@ -187,7 +189,6 @@ class App(object):
             truck.places = list([])
             truck.places.append(start_place)
             truck.places.extend(routed_places_in_truck_by_street_address[k].values())
-
-        print(f"total_packages: {totals.get('packages')}")
+            # truck.places.append(start_place)
 
         return trucks # [delivery for delivery in deliveries]
