@@ -4,6 +4,8 @@ from .utils.edge_cases import EdgeCases
 from .models.truck import Truck
 from .models.route import Route
 
+import sys
+
 class App(object):
     GOAL_MILES = 145
 
@@ -47,38 +49,48 @@ class App(object):
         count = self.get_distances_matrix().get_count()
         return count * count
 
+    def get_time_for_report(self):
+        return "" if len(sys.argv) <= 1 else sys.argv[1]
+            
     def run(self):
         print(f"App started: there are {self.packages_count()} packages and {self.count_distances()} distances.")
-
+        
         # setting problem's assumptions
         self.set_assumptions()
 
         places = self.assign_packages(self.__places, self.__packages)
         loaded_trucks = self.load_trucks(places, self.__places[0])
+        time = self.get_time_for_report()
 
         for truck in loaded_trucks:
             places = self.build_best_route(truck.places)
             truck.route = Route(places)
 
+        deliveries = list([])
+        total_miles = 0.0
+
         loaded_trucks[2].start_time = loaded_trucks[2].start_time + loaded_trucks[0].route.time
-        delivery_report = list([])
-
-        for truck in loaded_trucks:
-            delivery_report.extend(truck.deliver_route(lambda package_id: self.__packages.get(package_id)))
-
-        print("\n")
+        
+        print("\n=============================")
+        print("=     TRUCKS DEPARTURE      =")
         print("=============================")
+
+        for i, truck in enumerate(loaded_trucks):
+            (miles, report)= truck.deliver_route(lambda package_id: self.__packages.get(package_id), time)
+            
+            total_miles = total_miles + miles
+            deliveries.extend(report)
+
+            print(f"Truck {i+1} @ {truck.decimal_to_hours(truck.start_time)}")
+
+        print("\n=============================")
         print("=       ALL PACKAGES        =")
         print("=============================")
 
-        total_distance = 0.0
-
-        for (package_id, destination, distance, truck, status) in delivery_report:
-            print(f"{package_id} | {destination.place_street} | {destination.street_address} | {status} in Truck {truck.id}")
-            total_distance = total_distance + distance
+        for delivery in deliveries: 
+            print(delivery)
         
-        print("\n")
-        print(f"Total miles: {total_distance}")
+        print(f"\nTotal miles: {total_miles} miles")
 
     def assign_packages(self, places, packages):
         places_by_street_address = {place.street_address: place for place in places}
@@ -189,6 +201,5 @@ class App(object):
             truck.places = list([])
             truck.places.append(start_place)
             truck.places.extend(routed_places_in_truck_by_street_address[k].values())
-            # truck.places.append(start_place)
 
         return trucks # [delivery for delivery in deliveries]

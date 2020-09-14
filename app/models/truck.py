@@ -35,8 +35,15 @@ class Truck(object):
         half = "PM" if real_hours > 12 else "AM"
         return f"{hours}:{minutes} {half}"
 
-    def deliver_route(self, get_package_by_id):
+    def hours_to_decimal(self, hours_time):
+        (h, m) = hours_time.split(':')
+        return int(h) + (int(m)/60)
+
+    def deliver_route(self, get_package_by_id, report_time):
+        totals = {'miles': 0.0}
         delivery_report = list([])
+
+        is_time_report = len(report_time) > 0
 
         for _, routed_place in enumerate(self.route.places):
             for _, package_id in enumerate(routed_place.packages_ids):
@@ -45,16 +52,35 @@ class Truck(object):
         def travel_route(origin, destination):
             travel_time = self.route.get_time_between_places(origin, destination)
             distance = self.route.find_distance_between_places(origin, destination)
-
-            print(f"From {origin.place_street} to {destination.place_street} by {distance}")
+            
+            totals['miles'] = totals['miles'] + distance
             self.elapsed_time = self.elapsed_time + travel_time
 
             for _, package_id in enumerate(destination.packages_ids):
-                now_time = self.start_time + self.elapsed_time
-                get_package_by_id(package_id).status = PackageStatus.DELIVERED
-                delivery_report.append((package_id, destination, distance, self, f"{PackageStatus.DELIVERED.value} @ {self.decimal_to_hours(now_time)}"))
+                delivery_time = self.start_time + self.elapsed_time
+
+                if is_time_report:
+                    time_report_status = PackageStatus.IN_ROUTE
+
+                    param_time = self.hours_to_decimal(report_time)
+                    passed_time = param_time > delivery_time
+
+                    if passed_time:
+                        time_report_status = PackageStatus.DELIVERED 
+                    elif param_time < self.start_time:
+                        time_report_status = PackageStatus.IN_ORIGIN
+                    
+                    if time_report_status is not PackageStatus.DELIVERED:
+                        delivery_time = param_time
+                        
+                    get_package_by_id(package_id).status = time_report_status
+                else:
+                    get_package_by_id(package_id).status = PackageStatus.DELIVERED
+
+                log_time = self.decimal_to_hours(delivery_time)
+
+                delivery_report.append(f"{package_id.zfill(2)} | {get_package_by_id(package_id).status.value.zfill(9).replace('0', ' ')} @ {log_time} in Truck {self.id} | `{destination.place_street}` in `{destination.street_address}`")
         
         self.route.travel_route(travel_route)
-        print("-----")
         
-        return delivery_report
+        return (totals['miles'], delivery_report)
