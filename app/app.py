@@ -7,12 +7,6 @@ from .models.route import Route
 import sys
 
 class App(object):
-    GOAL_MILES = 145
-
-    TOTAL_PACKAGES = 40
-
-    DRIVERS_COUNT = 2
-    TRUCKS_COUNT = 3
 
     def __init__(self):
         self.__packages = None
@@ -107,17 +101,20 @@ class App(object):
         return places
     
     # heuristic algorithm to find the best route given a list of places
+    # based on a list of places, find the best route to reach them all
     def build_best_route(self, places, first_index=0):
         places_stack = list([])
-
         places_count = len(places)
-        visited_places_indexs = dict({first_index: 0})
+
+        # have we included this place in the route yet?
+        routed_places_indexs = dict({first_index: 0})
+        # a map that will help us find the place faster by it's index
         places_by_indexs = {place.index:place for place in places}
 
         place = places[first_index]
         places_stack.append(place)
 
-        while((places_count - 1) >= len(visited_places_indexs.keys())):
+        while((places_count - 1) >= len(routed_places_indexs.keys())):
             nearest = None
 
             place_index = 0
@@ -127,24 +124,26 @@ class App(object):
             while(not is_place_found):
                 place_index = place.nearest[closest_index].place_index
 
-                been_visited = place_index in visited_places_indexs.keys()
+                been_routed = place_index in routed_places_indexs.keys()
                 not_there = places_by_indexs.get(place_index) == None
 
-                is_place_found = not (been_visited or not_there)
+                is_place_found = not (been_routed or not_there)
                 if not is_place_found:
                     closest_index = closest_index + 1
                 else:
-                    visited_places_indexs[place_index] = closest_index
+                    routed_places_indexs[place_index] = closest_index
 
             nearest = places_by_indexs.get(place_index)
             places_stack.append(nearest)
 
-            # print(f"`{place.place_street}` is away from `{nearest.place_street}` by {place.points[nearest.index]} miles")
             place = nearest
 
+        # at the end, not matter what
+        # we need to get back to the origin
         places_stack.append(places[first_index])
         return places_stack
 
+    # this method will create an stack of places beloging to a route
     def load_trucks(self, places_stack, start_place):
         # just use 2 trucks
         trucks = list([
@@ -155,11 +154,15 @@ class App(object):
         totals = dict()
         totals["packages"] = 0
 
+        # general track of places routed
         routed_places_by_street_address = dict()
+        # specific truck's track of places routed
         routed_places_in_truck_by_street_address = list([dict() for _ in range(len(trucks))])
         
+        # register places in both tracks, general and truck's
         def route_place_in_truck(place, truck_tuple):
             (k, truck) = truck_tuple
+
             routed_places_by_street_address[place.street_address] = place
             routed_places_in_truck_by_street_address[k][place.street_address] = place
 
@@ -168,6 +171,9 @@ class App(object):
             
             totals["packages"] = totals.get('packages') + packages_count
 
+        # only allow registration of places based on:
+        # 1. Is a package already on any truck?
+        # 2. Is the truck full?
         def load_packages_by_place(callback):
             for place in places_stack:
                 is_place_routed = False
@@ -188,7 +194,6 @@ class App(object):
             (_, truck) = truck_tuple
             if truck.check_edge_case(package):
                 route_place_in_truck(place, truck_tuple)
-
         load_packages_by_place(handle_special_packages)
 
         # Once I distributed the special cases, distribute the rest
