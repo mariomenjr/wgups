@@ -4,7 +4,7 @@ import csv
 class CsvLoader(object):
     def load(self, items):
         my_dict = dict()
-        # TODO: O(n^2)
+        
         for item in items:
             path = item.get("path")
             with open(f'{path}.csv') as data:

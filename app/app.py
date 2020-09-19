@@ -4,13 +4,9 @@ from .utils.edge_cases import EdgeCases
 from .models.truck import Truck
 from .models.route import Route
 
+import sys
+
 class App(object):
-    GOAL_MILES = 145
-
-    TOTAL_PACKAGES = 40
-
-    DRIVERS_COUNT = 2
-    TRUCKS_COUNT = 3
 
     def __init__(self):
         self.__packages = None
@@ -25,6 +21,7 @@ class App(object):
         for package in packages:
             self.__packages.add(package.id, package)
 
+    # Big-O: O(n)
     def set_assumptions(self):
         # set assumptions
         EdgeCases.set_cannot_leave_before_905_grouping(self.__packages)
@@ -47,39 +44,52 @@ class App(object):
         count = self.get_distances_matrix().get_count()
         return count * count
 
+    def get_time_for_report(self):
+        return "" if len(sys.argv) <= 1 else sys.argv[1]
+            
     def run(self):
         print(f"App started: there are {self.packages_count()} packages and {self.count_distances()} distances.")
+        
+        time_report = self.get_time_for_report()
 
         # setting problem's assumptions
         self.set_assumptions()
 
-        places = self.assign_packages(self.__places, self.__packages)
-        loaded_trucks = self.load_trucks(places, self.__places[0])
+        places = self.assign_packages(self.__places, self.__packages) # O(n)
+        loaded_trucks = self.load_trucks(places, self.__places[0]) # O(n^3)
 
         for truck in loaded_trucks:
-            places = self.build_best_route(truck.places)
+            places = self.build_best_route(truck.places) # O(n^2)
             truck.route = Route(places)
 
+        deliveries = list([])
+        total_miles = 0.0
+
+        # we only have 2 drivers, so truck 3 can only start when truck 1 has came back
         loaded_trucks[2].start_time = loaded_trucks[2].start_time + loaded_trucks[0].route.time
-        delivery_report = list([])
-
-        for truck in loaded_trucks:
-            delivery_report.extend(truck.deliver_route(lambda package_id: self.__packages.get(package_id)))
-
-        print("\n")
+        
+        print("\n=============================")
+        print("=     TRUCKS DEPARTURE      =")
         print("=============================")
+
+        for i, truck in enumerate(loaded_trucks):
+            (miles, report)= truck.deliver_route(lambda package_id: self.__packages.get(package_id), time_report)
+            
+            total_miles = total_miles + miles
+            deliveries.extend(report)
+
+            print(f"Truck {i+1} @ {truck.decimal_to_hours(truck.start_time)}")
+
+        print("\n=============================")
         print("=       ALL PACKAGES        =")
         print("=============================")
 
-        total_distance = 0.0
-
-        for (package_id, destination, distance, truck, status) in delivery_report:
-            print(f"{package_id} | {destination.place_street} | {destination.street_address} | {status} in Truck {truck.id}")
-            total_distance = total_distance + distance
+        for delivery in deliveries: 
+            print(delivery)
         
-        print("\n")
-        print(f"Total miles: {total_distance}")
+        print(f"\nTotal miles: {total_miles} miles")
 
+    # O(n)
     def assign_packages(self, places, packages):
         places_by_street_address = {place.street_address: place for place in places}
 
@@ -94,45 +104,52 @@ class App(object):
 
         return places
     
-    # heuristic algorithm to find the best route given a list of places
+    # greedy algorithm to find the best route given a list of places
+    # based on a list of places, find the best route to reach them all
+    # O(n^2)
     def build_best_route(self, places, first_index=0):
         places_stack = list([])
-
         places_count = len(places)
-        visited_places_indexs = dict({first_index: 0})
-        places_by_indexs = {place.index:place for place in places}
+
+        # have we included this place in the route yet?
+        routed_places_indexs = dict({first_index: 0})
+        # a map that will help us find the place faster by it's index
+        places_by_indexs = {place.index:place for place in places} # O(n)
 
         place = places[first_index]
         places_stack.append(place)
 
-        while((places_count - 1) >= len(visited_places_indexs.keys())):
+        while(places_count > len(routed_places_indexs.keys())): # until I have register them all: O(n)
             nearest = None
 
             place_index = 0
             closest_index = 0
 
             is_place_found = False
-            while(not is_place_found):
+            while(not is_place_found): # O(n)
                 place_index = place.nearest[closest_index].place_index
 
-                been_visited = place_index in visited_places_indexs.keys()
+                been_routed = place_index in routed_places_indexs.keys()
                 not_there = places_by_indexs.get(place_index) == None
 
-                is_place_found = not (been_visited or not_there)
+                is_place_found = not (been_routed or not_there)
                 if not is_place_found:
                     closest_index = closest_index + 1
                 else:
-                    visited_places_indexs[place_index] = closest_index
+                    routed_places_indexs[place_index] = closest_index
 
             nearest = places_by_indexs.get(place_index)
             places_stack.append(nearest)
 
-            # print(f"`{place.place_street}` is away from `{nearest.place_street}` by {place.points[nearest.index]} miles")
             place = nearest
+        # then, at the end of this loop: O(n^2)
 
+        # at the end, not matter what
+        # we need to get back to the origin
         places_stack.append(places[first_index])
         return places_stack
 
+    # this method will create an stack of places beloging to a route
     def load_trucks(self, places_stack, start_place):
         # just use 2 trucks
         trucks = list([
@@ -143,11 +160,15 @@ class App(object):
         totals = dict()
         totals["packages"] = 0
 
+        # general track of places routed
         routed_places_by_street_address = dict()
+        # specific truck's track of places routed
         routed_places_in_truck_by_street_address = list([dict() for _ in range(len(trucks))])
         
+        # register places in both tracks, general and truck's
         def route_place_in_truck(place, truck_tuple):
             (k, truck) = truck_tuple
+
             routed_places_by_street_address[place.street_address] = place
             routed_places_in_truck_by_street_address[k][place.street_address] = place
 
@@ -156,6 +177,10 @@ class App(object):
             
             totals["packages"] = totals.get('packages') + packages_count
 
+        # only allow registration of places based on:
+        # 1. Is a package already on any truck?
+        # 2. Is the truck full?
+        # O(n^3)
         def load_packages_by_place(callback):
             for place in places_stack:
                 is_place_routed = False
@@ -176,7 +201,6 @@ class App(object):
             (_, truck) = truck_tuple
             if truck.check_edge_case(package):
                 route_place_in_truck(place, truck_tuple)
-
         load_packages_by_place(handle_special_packages)
 
         # Once I distributed the special cases, distribute the rest
@@ -189,6 +213,5 @@ class App(object):
             truck.places = list([])
             truck.places.append(start_place)
             truck.places.extend(routed_places_in_truck_by_street_address[k].values())
-            # truck.places.append(start_place)
 
         return trucks # [delivery for delivery in deliveries]
