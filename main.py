@@ -1,3 +1,7 @@
+# IDENTIFICATION INFORMATION
+# Student: Mario Menjivar Sermeno
+# Stud ID: 001097072
+
 from app.models.package import Package
 from app.models.place import Place
 from app.utils.csv_loader import CsvLoader

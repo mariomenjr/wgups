@@ -45,10 +45,12 @@ class Truck(object):
 
         is_time_report = len(report_time) > 0
 
+        # O(n^2)
         for _, routed_place in enumerate(self.route.places):
             for _, package_id in enumerate(routed_place.packages_ids):
                 get_package_by_id(package_id).status = PackageStatus.IN_ROUTE
 
+        # O(n)
         def travel_route(origin, destination):
             travel_time = self.route.get_time_between_places(origin, destination)
             distance = self.route.find_distance_between_places(origin, destination)

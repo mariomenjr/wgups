@@ -21,6 +21,7 @@ class App(object):
         for package in packages:
             self.__packages.add(package.id, package)
 
+    # Big-O: O(n)
     def set_assumptions(self):
         # set assumptions
         EdgeCases.set_cannot_leave_before_905_grouping(self.__packages)
@@ -49,20 +50,22 @@ class App(object):
     def run(self):
         print(f"App started: there are {self.packages_count()} packages and {self.count_distances()} distances.")
         
+        time_report = self.get_time_for_report()
+
         # setting problem's assumptions
         self.set_assumptions()
 
-        places = self.assign_packages(self.__places, self.__packages)
-        loaded_trucks = self.load_trucks(places, self.__places[0])
-        time = self.get_time_for_report()
+        places = self.assign_packages(self.__places, self.__packages) # O(n)
+        loaded_trucks = self.load_trucks(places, self.__places[0]) # O(n^3)
 
         for truck in loaded_trucks:
-            places = self.build_best_route(truck.places)
+            places = self.build_best_route(truck.places) # O(n^2)
             truck.route = Route(places)
 
         deliveries = list([])
         total_miles = 0.0
 
+        # we only have 2 drivers, so truck 3 can only start when truck 1 has came back
         loaded_trucks[2].start_time = loaded_trucks[2].start_time + loaded_trucks[0].route.time
         
         print("\n=============================")
@@ -70,7 +73,7 @@ class App(object):
         print("=============================")
 
         for i, truck in enumerate(loaded_trucks):
-            (miles, report)= truck.deliver_route(lambda package_id: self.__packages.get(package_id), time)
+            (miles, report)= truck.deliver_route(lambda package_id: self.__packages.get(package_id), time_report)
             
             total_miles = total_miles + miles
             deliveries.extend(report)
@@ -86,6 +89,7 @@ class App(object):
         
         print(f"\nTotal miles: {total_miles} miles")
 
+    # O(n)
     def assign_packages(self, places, packages):
         places_by_street_address = {place.street_address: place for place in places}
 
@@ -100,8 +104,9 @@ class App(object):
 
         return places
     
-    # heuristic algorithm to find the best route given a list of places
+    # greedy algorithm to find the best route given a list of places
     # based on a list of places, find the best route to reach them all
+    # O(n^2)
     def build_best_route(self, places, first_index=0):
         places_stack = list([])
         places_count = len(places)
@@ -109,19 +114,19 @@ class App(object):
         # have we included this place in the route yet?
         routed_places_indexs = dict({first_index: 0})
         # a map that will help us find the place faster by it's index
-        places_by_indexs = {place.index:place for place in places}
+        places_by_indexs = {place.index:place for place in places} # O(n)
 
         place = places[first_index]
         places_stack.append(place)
 
-        while((places_count - 1) >= len(routed_places_indexs.keys())):
+        while(places_count > len(routed_places_indexs.keys())): # until I have register them all: O(n)
             nearest = None
 
             place_index = 0
             closest_index = 0
 
             is_place_found = False
-            while(not is_place_found):
+            while(not is_place_found): # O(n)
                 place_index = place.nearest[closest_index].place_index
 
                 been_routed = place_index in routed_places_indexs.keys()
@@ -137,6 +142,7 @@ class App(object):
             places_stack.append(nearest)
 
             place = nearest
+        # then, at the end of this loop: O(n^2)
 
         # at the end, not matter what
         # we need to get back to the origin
@@ -174,6 +180,7 @@ class App(object):
         # only allow registration of places based on:
         # 1. Is a package already on any truck?
         # 2. Is the truck full?
+        # O(n^3)
         def load_packages_by_place(callback):
             for place in places_stack:
                 is_place_routed = False
