@@ -7,6 +7,7 @@ class DistanceMatrix(object):
         self.__mapped_addresses = dict()
         self.__matrix = []
 
+    # Complexity: O(n^3)
     def fill_closest(self, places):
         places_count = len(places)
         for i, place in enumerate(places):
@@ -20,9 +21,11 @@ class DistanceMatrix(object):
 
         return places
 
+    # Complexity: O(1)
     def get_count(self):
         return len(self.__matrix)
 
+    # Complexity: O(n^2)
     def feed(self, places):
         for i, place in enumerate(places):
             self.__mapped_addresses[place.street_address] = i

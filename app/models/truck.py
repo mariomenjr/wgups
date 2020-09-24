@@ -25,6 +25,7 @@ class Truck(object):
         self.elapsed_time = 0
 
     # return the 00:00 representation of a decimal value
+    # Complexity: O(1)
     def decimal_to_hours(self, decimal_time):
         in_minutes = (decimal_time * 60)
         partial_hour = in_minutes % 60
@@ -37,19 +38,21 @@ class Truck(object):
         return f"{hours}:{minutes} {half}"
 
     # return the decimal representation of a 00:00 value
+    # Complexity: O(1)
     def hours_to_decimal(self, hours_time):
         (h, m) = hours_time.split(':')
         return int(h) + (int(m)/60)
 
+    # Complexity: O(n)
     def deliver_route(self, get_package_by_id, report_time):
         totals = {'miles': 0.0}
         delivery_report = list([])
 
         is_time_report = len(report_time) > 0
 
-        # O(n)
         # this is the callback provided to the `Route.travel_route` method
         # it will travel the route and generate the values for the report
+        # Complexity: O(n)
         def travel_route(origin, destination):
             travel_time = self.route.get_time_between_places(origin, destination)
             distance = self.route.find_distance_between_places(origin, destination)

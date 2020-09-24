@@ -14,6 +14,7 @@ class Route(object):
     # so the actions in the call back get called in each loop
     # passign origin and destination places
     # as the system is traveling the route
+    # Complexity: O(n)
     def travel_route(self, callback):
         for i, origin in enumerate(self.places):
             j = i + 1
@@ -21,6 +22,7 @@ class Route(object):
             
             callback(origin, self.places[j])
 
+    # Complexity: O(n)
     def calculate_cost(self):
         # the whole cost in time and miles is calculated for this truck
         def accumulate_props(origin, destination):
@@ -29,10 +31,12 @@ class Route(object):
         
         self.travel_route(accumulate_props)
 
+    # Complexity: O(1)
     def get_time_between_places(self, one, two):
         distance = float(one.points[two.index])
         return distance / self.CONSTANT_SPEED
 
+    # Complexity: O(1)
     def find_distance_between_places(self, one, two):
         return float(one.points[two.index])
         

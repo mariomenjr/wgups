@@ -13,24 +13,28 @@ class App(object):
         self.__places = None
         self.__distance_matrix = None
 
+    # Complexity: O(1)
     def get_packages(self):
         return self.__packages
 
+    # Complexity: O(n)
     def set_packages(self, packages):
         self.__packages = HashTable(size=len(packages))
         for package in packages:
             self.__packages.add(package.id, package)
 
-    # Big-O: O(n)
+    # Complexity: O(n)
     def set_assumptions(self):
         # set assumptions
         EdgeCases.set_cannot_leave_before_905_grouping(self.__packages)
         EdgeCases.set_same_truck_same_time_grouping(self.__packages)
         EdgeCases.set_only_truck_2_grouping(self.__packages)
 
+    # Complexity: O(1)
     def get_distances_matrix(self):
         return self.__distance_matrix
 
+    # Complexity: O(n^3)
     def set_distances_matrix(self, places):
         self.__distance_matrix = DistanceMatrix()
         self.__distance_matrix.feed(places)
@@ -40,17 +44,20 @@ class App(object):
         # which will helps us build the best route
         self.__places = self.__distance_matrix.fill_closest(places)
 
+    # Complexity: O(1)
     def packages_count(self):
         return self.get_packages().get_count()
 
+    # Complexity: O(1)
     def count_distances(self):
         count = self.get_distances_matrix().get_count()
         return count * count
 
+    # Complexity: O(1)
     def get_time_for_report(self):
         return "" if len(sys.argv) <= 1 else sys.argv[1]
 
-    # O(n^3)       
+    # Complexity: O(n^3)       
     def run(self):
         print(f"App started: there are {self.packages_count()} packages and {self.count_distances()} distances.")
         
@@ -61,13 +68,13 @@ class App(object):
 
         # packages are assigned to places 
         # then places are assigned to trucks
-        places = self.assign_packages(self.__places, self.__packages) # O(n)
-        loaded_trucks = self.load_trucks(places, self.__places[0]) # O(n^3)
+        places = self.assign_packages(self.__places, self.__packages) 
+        loaded_trucks = self.load_trucks(places, self.__places[0]) 
 
         # once each truck has been assigned places
         # the best route is built upon those places
         for truck in loaded_trucks:
-            places = self.build_best_route(truck.places) # O(n^2)
+            places = self.build_best_route(truck.places)
             truck.route = Route(places)
 
         deliveries = list([])
@@ -81,6 +88,7 @@ class App(object):
         print("=============================")
 
         # the packages are delivered based on the route previously built
+        # Complexity: O(n)
         for i, truck in enumerate(loaded_trucks):
             # the trucks need access to the hash table,
             # that's why we send the lambda
@@ -96,12 +104,13 @@ class App(object):
         print("=============================")
 
         # report is printed
+        # Complexity: O(n)
         for delivery in deliveries: 
             print(delivery)
         
         print(f"\nTotal miles: {total_miles} miles")
 
-    # O(n)
+    # Complexity: O(n)
     def assign_packages(self, places, packages):
         places_by_street_address = {place.street_address: place for place in places}
 
@@ -118,7 +127,7 @@ class App(object):
     
     # greedy algorithm to find the best route given a list of places
     # based on a list of places, find the best route to reach them all
-    # O(n^2)
+    # Complexity: O(n^2)
     def build_best_route(self, places, first_index=0):
         places_stack = list([])
         places_count = len(places)
@@ -126,12 +135,13 @@ class App(object):
         # have we included this place in the route yet?
         routed_places_indexs = dict({first_index: 0})
         # a map that will help us find the place faster by it's index
-        places_by_indexs = {place.index:place for place in places} # O(n)
+        places_by_indexs = {place.index:place for place in places}
 
         place = places[first_index]
         places_stack.append(place)
 
-        while(places_count > len(routed_places_indexs.keys())): # until I have register them all: O(n)
+        # Complexity: O(n^2)
+        while(places_count > len(routed_places_indexs.keys())): # until I have register them all
             nearest = None
 
             place_index = 0
@@ -140,7 +150,8 @@ class App(object):
             # the flag is clear in each loop
             # this helps avoiding skip any place
             is_place_found = False
-            while(not is_place_found): # O(n)
+            # Complexity: O(n)
+            while(not is_place_found):
                 # the nearest places is selected
                 place_index = place.nearest[closest_index].place_index
 
@@ -169,6 +180,7 @@ class App(object):
         return places_stack
 
     # this method will create an stack of places beloging to a route
+    # Complexity: O(n^3)
     def load_trucks(self, places_stack, start_place):
         # just use 2 trucks
         trucks = list([
@@ -185,6 +197,7 @@ class App(object):
         routed_places_in_truck_by_street_address = list([dict() for _ in range(len(trucks))])
         
         # register places in both tracks, general and truck's
+        # Complexity: O(1)
         def route_place_in_truck(place, truck_tuple):
             (k, truck) = truck_tuple
 
@@ -203,7 +216,7 @@ class App(object):
         # only allow registration of places based on:
         # 1. Is a package already on any truck?
         # 2. Is the truck full?
-        # O(n^3)
+        # Complexity: O(n^3)
         def load_packages_by_place(callback):
             for place in places_stack:
 
@@ -226,6 +239,7 @@ class App(object):
                     if is_place_routed: break
 
         # Load special packages
+        # Complexity: O(n^3)
         def handle_special_packages(package, place, truck_tuple):
             (_, truck) = truck_tuple
             if truck.check_edge_case(package):
@@ -233,11 +247,13 @@ class App(object):
         load_packages_by_place(handle_special_packages)
 
         # Once I distributed the special cases, distribute the rest
+        # Complexity: O(n^3)
         def handle_normal_packages(package, place, truck_tuple):
             route_place_in_truck(place, truck_tuple)
         load_packages_by_place(handle_normal_packages)
 
         # put the list in the truck
+        # Complexity: O(n)
         for k, truck in enumerate(trucks):
             truck.places = list([])
             truck.places.append(start_place)

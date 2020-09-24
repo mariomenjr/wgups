@@ -2,6 +2,8 @@ import csv
 
 
 class CsvLoader(object):
+
+    # Complexity: O(n^2)
     def load(self, items):
         my_dict = dict()
         

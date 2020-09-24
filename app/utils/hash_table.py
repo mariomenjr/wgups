@@ -3,12 +3,14 @@ class HashTable(object):
         self.__count = 0
         self.__table = [None] * size
 
+    # Complexity: O(1)
     def hash(self, key):
         hashed = 0
         for char in str(key):
             hashed += ord(char)
         return hashed % len(self.__table)
 
+    # Complexity: O(n)
     def add(self, key, item):
         hashed = self.hash(key)
         pair = [key, item]
@@ -30,6 +32,7 @@ class HashTable(object):
             self.__table[hashed].append(pair)
             self.__count = self.__count + 1
 
+    # Complexity: O(1)
     def get(self, key):
         hashed = self.hash(key)
         pairs = self.__table[hashed]
@@ -42,17 +45,6 @@ class HashTable(object):
         except:
             return None
 
-    def delete(self, key):
-        hashed = self.hash(key)
-        pairs = self.__table[hashed]
-
-        if pairs is None:
-            return pairs
-
-        for pair in pairs: 
-            if pair[0] == key:
-                pairs.remove(pair)
-        pass
-
+    # Complexity: O(1)
     def get_count(self):
         return self.__count
