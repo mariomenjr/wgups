@@ -34,7 +34,10 @@ class App(object):
     def set_distances_matrix(self, places):
         self.__distance_matrix = DistanceMatrix()
         self.__distance_matrix.feed(places)
-
+        
+        # gets all the distances related to each package, 
+        # and creates the nearest property 
+        # which will helps us build the best route
         self.__places = self.__distance_matrix.fill_closest(places)
 
     def packages_count(self):
@@ -46,7 +49,8 @@ class App(object):
 
     def get_time_for_report(self):
         return "" if len(sys.argv) <= 1 else sys.argv[1]
-            
+
+    # O(n^3)       
     def run(self):
         print(f"App started: there are {self.packages_count()} packages and {self.count_distances()} distances.")
         
@@ -55,9 +59,13 @@ class App(object):
         # setting problem's assumptions
         self.set_assumptions()
 
+        # packages are assigned to places 
+        # then places are assigned to trucks
         places = self.assign_packages(self.__places, self.__packages) # O(n)
         loaded_trucks = self.load_trucks(places, self.__places[0]) # O(n^3)
 
+        # once each truck has been assigned places
+        # the best route is built upon those places
         for truck in loaded_trucks:
             places = self.build_best_route(truck.places) # O(n^2)
             truck.route = Route(places)
@@ -72,7 +80,10 @@ class App(object):
         print("=     TRUCKS DEPARTURE      =")
         print("=============================")
 
+        # the packages are delivered based on the route previously built
         for i, truck in enumerate(loaded_trucks):
+            # the trucks need access to the hash table,
+            # that's why we send the lambda
             (miles, report)= truck.deliver_route(lambda package_id: self.__packages.get(package_id), time_report)
             
             total_miles = total_miles + miles
@@ -84,6 +95,7 @@ class App(object):
         print("=       ALL PACKAGES        =")
         print("=============================")
 
+        # report is printed
         for delivery in deliveries: 
             print(delivery)
         
@@ -125,17 +137,24 @@ class App(object):
             place_index = 0
             closest_index = 0
 
+            # the flag is clear in each loop
+            # this helps avoiding skip any place
             is_place_found = False
             while(not is_place_found): # O(n)
+                # the nearest places is selected
                 place_index = place.nearest[closest_index].place_index
 
+                # has this place been routed in a loop before?
                 been_routed = place_index in routed_places_indexs.keys()
+                # is this place non-existence?
                 not_there = places_by_indexs.get(place_index) == None
 
                 is_place_found = not (been_routed or not_there)
                 if not is_place_found:
+                    # this will help the algorithm select the next nearest place
                     closest_index = closest_index + 1
                 else:
+                    # the place is routed
                     routed_places_indexs[place_index] = closest_index
 
             nearest = places_by_indexs.get(place_index)
@@ -169,9 +188,13 @@ class App(object):
         def route_place_in_truck(place, truck_tuple):
             (k, truck) = truck_tuple
 
+            # the place is registered in this trucks route
             routed_places_by_street_address[place.street_address] = place
+            # and also globally, so we don't route this place in other truck
             routed_places_in_truck_by_street_address[k][place.street_address] = place
 
+            # keeping track of the number of packages
+            # help us keep the truck loaded with the allowed number of packages
             packages_count = len(routed_places_by_street_address[place.street_address].packages_ids)
             truck.packages_count = truck.packages_count + packages_count
             
@@ -183,14 +206,20 @@ class App(object):
         # O(n^3)
         def load_packages_by_place(callback):
             for place in places_stack:
+
+                # a flag is clear
+                # so we don't miss a package
                 is_place_routed = False
                 for package_id in place.packages_ids:
                     package = self.__packages.get(package_id)
 
+                    # by each truck, 
+                    # we need to figure out if the place for a package has been included in the roue
                     for k, truck in enumerate(trucks):
                         is_place_routed = routed_places_by_street_address.get(place.street_address) is not None
                         if is_place_routed: break
 
+                        # keeping the number of packges in each truck in control
                         if truck.packages_count < truck.MAX_ALLOWED_PACKAGES:
                             callback(package, place, (k, truck))
                         

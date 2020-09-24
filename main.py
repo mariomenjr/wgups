@@ -22,4 +22,4 @@ if __name__ == "__main__":
 
     del loaded
 
-    app.run()
+    app.run() # starts application
