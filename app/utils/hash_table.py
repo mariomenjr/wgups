@@ -14,15 +14,18 @@ class HashTable(object):
         pair = [key, item]
         will_append = True
 
+        # has this position been used before?
         if self.__table[hashed] is None:
             self.__table[hashed] = list()
 
+        # is this value already chained?
         for inhabitant in self.__table[hashed]:
             will_append = inhabitant[0] != key
             if not will_append:
                 inhabitant[1] = pair[1]
                 break
-
+        
+        # let's chain the value in this position
         if will_append:
             self.__table[hashed].append(pair)
             self.__count = self.__count + 1
@@ -31,6 +34,7 @@ class HashTable(object):
         hashed = self.hash(key)
         pairs = self.__table[hashed]
 
+        # was the key found?
         if pairs is None:
             return pairs
         try:
